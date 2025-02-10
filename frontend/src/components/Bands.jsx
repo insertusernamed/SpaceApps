@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+/* eslint-disable no-unused-vars */
+import { useState } from "react";
 import axios from "axios";
 import Analysis from "./Analysis";
+import PropTypes from "prop-types";
 
 const domain = "chrisbarbati.ddns.net:8082";
 
@@ -54,7 +56,7 @@ const bandInfo = [
         id: "B10",
         label: "Thermal Infrared 2 (TIR 2)",
         description: `Wavelength: 11.50 – 12.51 µm (thermal infrared spectrum). Use Cases: Surface Temperature, Volcanic and Heat Analysis.`,
-    }
+    },
 ];
 
 function Bands({ coordinates, boundingBoxCoordinates }) {
@@ -71,7 +73,6 @@ function Bands({ coordinates, boundingBoxCoordinates }) {
     const [isAnalysisVisible, setIsAnalysisVisible] = useState(false);
     const [nextFlyOverTime, setNextFlyOverTime] = useState("");
 
-
     // response states
     const [imageResponse, setimageResponse] = useState(null);
     const [dataResponse, setdataResponse] = useState(null);
@@ -83,22 +84,26 @@ function Bands({ coordinates, boundingBoxCoordinates }) {
     };
 
     const handleSubmit = async (event) => {
-
         //Iterate over all properties of the bands state object
-        const selectedBands = Object.keys(bands).filter((bandId) => bands[bandId]);
+        const selectedBands = Object.keys(bands).filter(
+            (bandId) => bands[bandId]
+        );
 
-        let selectedBandsCSV = ""
+        let selectedBandsCSV = "";
 
         //For each value in selectedBands, concatenate into selectedBandsCSV
         selectedBands.forEach((band) => {
-            selectedBandsCSV += band + ","
+            selectedBandsCSV += band + ",";
         });
 
         //Trim the trailing comma
-        selectedBandsCSV = selectedBandsCSV.substring(0, selectedBandsCSV.length - 1);
+        selectedBandsCSV = selectedBandsCSV.substring(
+            0,
+            selectedBandsCSV.length - 1
+        );
 
         if (selectedBandsCSV === "") {
-            selectedBandsCSV = "B01,B02,B03,B04,B05"
+            selectedBandsCSV = "B01,B02,B03,B04,B05";
         }
 
         console.log(selectedBandsCSV);
@@ -288,5 +293,18 @@ function Bands({ coordinates, boundingBoxCoordinates }) {
         </>
     );
 }
+
+Bands.propTypes = {
+    coordinates: PropTypes.shape({
+        lat: PropTypes.number.isRequired,
+        lng: PropTypes.number.isRequired,
+    }).isRequired,
+    boundingBoxCoordinates: PropTypes.shape({
+        minLon: PropTypes.number.isRequired,
+        maxLon: PropTypes.number.isRequired,
+        minLat: PropTypes.number.isRequired,
+        maxLat: PropTypes.number.isRequired,
+    }).isRequired,
+};
 
 export default Bands;

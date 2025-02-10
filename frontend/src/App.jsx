@@ -1,4 +1,5 @@
 import "./App.css";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 /**Views**/
 import LandingPage from "./components/LandingPage";
@@ -8,7 +9,9 @@ function App() {
     return (
         <main>
             <LandingPage />
-            <MapComponent />
+            <ErrorBoundary>
+                <MapComponent />
+            </ErrorBoundary>
         </main>
     );
 }

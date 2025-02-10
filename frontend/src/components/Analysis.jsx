@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import Chart from "chart.js/auto";
-import axios from "axios";
 import "../assets/css/analysisStyles.css";
 
 const ChartJsScatterPlot = ({ bandData, bandName }) => {
@@ -112,6 +112,17 @@ const ChartJsScatterPlot = ({ bandData, bandName }) => {
     return (
         <canvas ref={chartRef} style={{ height: "250px", width: "200px" }} />
     );
+};
+
+ChartJsScatterPlot.propTypes = {
+    bandData: PropTypes.arrayOf(
+        PropTypes.shape({
+            stats: PropTypes.shape({
+                mean: PropTypes.number.isRequired,
+            }).isRequired,
+        })
+    ).isRequired,
+    bandName: PropTypes.string.isRequired,
 };
 
 const calculateLineOfBestFit = (data) => {
@@ -254,6 +265,23 @@ const Analysis = ({ data, imageResponse }) => {
             </div>
         </div>
     );
+};
+
+Analysis.propTypes = {
+    data: PropTypes.shape({
+        data: PropTypes.shape({
+            data: PropTypes.arrayOf(
+                PropTypes.shape({
+                    outputs: PropTypes.shape({
+                        data: PropTypes.shape({
+                            bands: PropTypes.object,
+                        }),
+                    }),
+                })
+            ),
+        }),
+    }).isRequired,
+    imageResponse: PropTypes.string.isRequired,
 };
 
 export default Analysis;

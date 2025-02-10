@@ -1,5 +1,6 @@
+/* eslint-disable no-unused-vars */
 import "ol/ol.css";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Map, View } from "ol";
 import { fromLonLat, toLonLat } from "ol/proj";
 import { Style, Icon, Stroke, Fill } from "ol/style";
@@ -11,13 +12,10 @@ import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 import Polygon from "ol/geom/Polygon";
 import KML from "ol/format/KML";
-import { buffer as bufferExtent } from "ol/extent";
 import Bands from "./Bands";
 import locationIcon from "../assets/current-location.svg";
 
 const MapComponent = () => {
-    // map is used to store the reference to the map object
-    // mapRef is used to store the reference to the map container
     const map = useRef(null);
     const mapRef = useRef(null);
     const markerRef = useRef(null);
@@ -29,9 +27,33 @@ const MapComponent = () => {
     const [isNotificationEnabled, setIsNotificationEnabled] = useState(false);
     const [lat, setLat] = useState("");
     const [lng, setLng] = useState("");
+    const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
 
     useEffect(() => {
-        if (!mapRef.current) return;
+        if (window.google && window.google.maps) {
+            setIsGoogleLoaded(true);
+            return;
+        }
+
+        window.initMap = () => {
+            setIsGoogleLoaded(true);
+        };
+
+        if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
+            const script = document.createElement("script");
+            script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyACLSNOSRpuGzMdAOAD5Rh5sJnxA91CIZ0&libraries=places&callback=initMap`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+
+        return () => {
+            delete window.initMap;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!mapRef.current || !isGoogleLoaded) return;
         const sceneCenter = fromLonLat([-79.457808, 44.593214]);
 
         const markerFeature = new Feature({
@@ -133,7 +155,7 @@ const MapComponent = () => {
         return () => {
             if (map.current) map.current.setTarget(null);
         };
-    }, []);
+    }, [isGoogleLoaded]);
 
     const updateMarkerPosition = (coordinate) => {
         if (markerRef.current) {
@@ -150,35 +172,28 @@ const MapComponent = () => {
     };
 
     const isPointInPolygon = (point, polygon) => {
-        // Extract the x and y coordinates of the point
         const x = point[0],
             y = point[1];
         let inside = false;
 
-        // Loop through each edge of the polygon
         for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-            // Get the coordinates of the current vertex (xi, yi) and the previous vertex (xj, yj)
             const xi = polygon[i][0],
                 yi = polygon[i][1];
             const xj = polygon[j][0],
                 yj = polygon[j][1];
 
-            // Check if the point is within the y-bounds of the edge
             const intersect =
                 yi > y !== yj > y &&
-                // Check if the point is to the left of the edge
                 x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
 
-            // If the point is on the left side of the edge, toggle the inside status
             if (intersect) inside = !inside;
         }
 
-        // Return true if the point is inside the polygon, false otherwise
         return inside;
     };
 
     const displayClosestKmlPoint = (coordinate) => {
-        if (!kmlLayerRef.current) return; // if kml layer is loaded
+        if (!kmlLayerRef.current) return;
 
         const kmlFeatures = kmlLayerRef.current.getSource().getFeatures();
 
@@ -202,8 +217,6 @@ const MapComponent = () => {
         if (containingFeature) {
             const coords = containingFeature.getGeometry().flatCoordinates;
 
-            // ----------------- Drawing the Border ----------------- \\
-
             const polygonCoords = [
                 [coords[3], coords[4]],
                 [coords[6], coords[7]],
@@ -221,61 +234,52 @@ const MapComponent = () => {
 
             const latLng = averageCoordinates(boundingBoxCoords);
 
-            //console.log("Average Coordinates: ", latLng);
-
             setBoundingBox(latLng);
 
             function averageCoordinates(coords) {
                 if (!coords || coords.length === 0) return null;
-            
-                let latSum = 0, lonSum = 0;
-            
-                // Sum all latitude and longitude values
-                coords.forEach(coord => {
-                    lonSum += coord[0]; // longitude
-                    latSum += coord[1]; // latitude
+
+                let latSum = 0,
+                    lonSum = 0;
+
+                coords.forEach((coord) => {
+                    lonSum += coord[0];
+                    latSum += coord[1];
                 });
-            
-                // Find the average latitude and longitude (center point)
+
                 const avgLat = latSum / coords.length;
                 const avgLon = lonSum / coords.length;
-            
-                // Find the maximum distance from the center to one of the points
-                let maxLatDist = 0, maxLonDist = 0;
-                coords.forEach(coord => {
+
+                let maxLatDist = 0,
+                    maxLonDist = 0;
+                coords.forEach((coord) => {
                     const latDist = Math.abs(coord[1] - avgLat);
                     const lonDist = Math.abs(coord[0] - avgLon);
-            
+
                     if (latDist > maxLatDist) maxLatDist = latDist;
                     if (lonDist > maxLonDist) maxLonDist = lonDist;
                 });
-            
-                // Define the square by extending equally in all directions from the center
+
                 const minLat = avgLat - maxLatDist;
                 const maxLat = avgLat + maxLatDist;
                 const minLon = avgLon - maxLonDist;
                 const maxLon = avgLon + maxLonDist;
-            
+
                 return { minLat, maxLat, minLon, maxLon };
             }
-
-            //setBoundingBox(boundingBoxCoords);
 
             const borderPolygon = new Feature({
                 geometry: new Polygon([polygonCoords]),
             });
 
-            // Clear previous border and add new one
             borderLayerRef.current.getSource().clear();
             borderLayerRef.current.getSource().addFeature(borderPolygon);
 
             const extent = containingFeature.getGeometry().getExtent();
-            //const bufferedExtent = bufferExtent(extent, extent[2] - extent[0]);
             setTimeout(() => {
-                // change extent to bufferedExtent to zoom out a lot more, maybe for 3x3?
                 map.current.getView().fit(extent, {
                     padding: [100, 100, 100, 100],
-                    duration: 1000, // Animate over 1 second
+                    duration: 1000,
                 });
             }, 0);
         }
@@ -313,81 +317,88 @@ const MapComponent = () => {
 
     return (
         <>
-            <div id="main-container">
-                <div className="sidebar">
-                    <div className="form-header">
-                        <h1 className="text-center pt-4">Search Location</h1>
-                        <div className="search-container">
-                            <input
-                                id="search-box"
-                                ref={searchBoxRef}
-                                type="text"
-                                placeholder="Search by Name..."
-                            />
-                            <button
-                                type="button"
-                                className="currentLocationButton"
-                                onClick={handleUseCurrentLocation}
-                            >
-                                <img
-                                    className="currentLocationButton"
-                                    src={locationIcon}
-                                    alt="Use Current Location"
+            {!isGoogleLoaded ? (
+                <div style={{ padding: "20px", textAlign: "center" }}>
+                    Loading map...
+                </div>
+            ) : (
+                <div id="main-container">
+                    <div className="sidebar">
+                        <div className="form-header">
+                            <h1 className="text-center pt-4">
+                                Search Location
+                            </h1>
+                            <div className="search-container">
+                                <input
+                                    id="search-box"
+                                    ref={searchBoxRef}
+                                    type="text"
+                                    placeholder="Search by Name..."
                                 />
-                            </button>
+                                <button
+                                    type="button"
+                                    className="currentLocationButton"
+                                    onClick={handleUseCurrentLocation}
+                                >
+                                    <img
+                                        className="currentLocationButton"
+                                        src={locationIcon}
+                                        alt="Use Current Location"
+                                    />
+                                </button>
+                            </div>
+                            <p className="text-center pt-2">
+                                Or input Lat/Long manually:
+                            </p>
                         </div>
-                        <p className="text-center pt-2">
-                            Or input Lat/Long manually:
-                        </p>
+
+                        <form onSubmit={handleSubmit}>
+                            <label>Latitude</label>
+                            <input
+                                id="lat-input"
+                                type="number"
+                                step="any"
+                                value={lat}
+                                onChange={(e) => setLat(e.target.value)}
+                                required
+                            />
+                            <label>Longitude</label>
+                            <input
+                                id="lng-input"
+                                type="number"
+                                step="any"
+                                value={lng}
+                                onChange={(e) => setLng(e.target.value)}
+                                required
+                            />
+
+                            <button
+                                id="submit"
+                                className="mtt-4 mt-4 primary-button"
+                                type="submit"
+                            >
+                                Next
+                            </button>
+                        </form>
                     </div>
 
-                    <form onSubmit={handleSubmit}>
-                        <label>Latitude</label>
-                        <input
-                            id="lat-input"
-                            type="number"
-                            step="any"
-                            value={lat}
-                            onChange={(e) => setLat(e.target.value)}
-                            required
-                        />
-                        <label>Longitude</label>
-                        <input
-                            id="lng-input"
-                            type="number"
-                            step="any"
-                            value={lng}
-                            onChange={(e) => setLng(e.target.value)}
-                            required
-                        />
-
-                        <button
-                            id="submit"
-                            className="mtt-4 mt-4 primary-button"
-                            type="submit"
-                        >
-                            Next
-                        </button>
-                    </form>
+                    <div id="map-container">
+                        <div
+                            ref={mapRef}
+                            id="map"
+                            style={{
+                                width: "100%",
+                                maxWidth: "1200px",
+                                height: "600px",
+                                border: "2px solid white",
+                                borderRadius: "5px",
+                                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
+                            }}
+                        ></div>
+                    </div>
                 </div>
-
-                <div id="map-container">
-                    <div
-                        ref={mapRef}
-                        id="map"
-                        style={{
-                            width: "100%",
-                            maxWidth: "1200px",
-                            height: "600px",
-                            border: "2px solid white",
-                            borderRadius: "5px",
-                            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
-                        }}
-                    ></div>
-                </div>
-            </div>
+            )}
             <div className="landsart-data-container">
-                {/* <ImageComponent /> */}
                 <Bands
                     coordinates={coordinates}
                     boundingBoxCoordinates={boundingBox}

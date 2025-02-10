@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+/* eslint-disable no-unused-vars */
+import { useState } from "react";
 import axios from "axios";
+import PropTypes from "prop-types";
 
 const LocationForm = ({
     lat,
@@ -121,6 +123,15 @@ const LocationForm = ({
             <p>{formMessage}</p>
         </form>
     );
+};
+
+LocationForm.propTypes = {
+    lat: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    setLat: PropTypes.func.isRequired,
+    lng: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    setLng: PropTypes.func.isRequired,
+    updateMarkerPosition: PropTypes.func.isRequired,
+    getLandsetData: PropTypes.func.isRequired,
 };
 
 export default LocationForm;

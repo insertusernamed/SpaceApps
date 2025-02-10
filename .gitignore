@@ -29,3 +29,5 @@ backend/SpaceAppsLR2/target/classes/developer.properties
 backend/SpaceAppsLR2/target/classes/developer.properties
 *.properties
 slides
+.DS_Store
+**/.DS_Store

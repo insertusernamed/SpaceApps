@@ -49,16 +49,20 @@
 }
 
 html {
-    background-color: #4c566a;
+    background-color: var(--foreground-color);
 }
 
 body {
     color: var(--text-color);
     background-color: var(--bg-color);
+    position: relative;
+    z-index: 0;
 }
 
 main {
     min-height: 100vh;
+    position: relative;
+    z-index: 1;
 }
 
 h1 {
@@ -103,19 +107,21 @@ p {
     justify-content: center;
     align-items: center;
     position: relative;
+    z-index: 2;
 }
+
 .number-circle {
     display: flex;
-    justify-content: center; 
-    align-items: center; 
-    width: 40px; 
-    height: 40px; 
-    border-radius: 50%; 
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     background-color: var(--foreground-color);
-    color: var(--text-color); 
+    color: var(--text-color);
     font-size: var(--font-size-large);
-    margin: 5px; 
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+    margin: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .landing-header {
@@ -168,17 +174,17 @@ p {
 
 .search-container {
     display: flex;
-    justify-content: center; 
-    align-items: center; 
-    gap: 10px; 
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
 }
-  
+
 .currentLocationButton {
-    width: 30px; 
+    width: 30px;
     height: 30px;
     display: flex;
     align-items: center;
-    justify-content: center; 
+    justify-content: center;
     border: none;
     color: var(--text-color);
     border-radius: 4px;
@@ -248,6 +254,8 @@ p {
     min-height: 100vh;
     background-color: var(--bg-color);
     color: var(--text-color);
+    position: relative;
+    z-index: 2;
 }
 
 .sidebar {
@@ -260,6 +268,8 @@ p {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    position: relative;
+    z-index: 3;
 }
 
 #map-container {
@@ -269,6 +279,8 @@ p {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    position: relative;
+    z-index: 3;
 }
 
 /* Form Styles */
@@ -413,7 +425,7 @@ input[type="email"]:focus,
 }
 
 /*Container*/
-.landsart-data-container{
+.landsart-data-container {
     background-color: var(--bg-color);
     color: var(--text-color);
 }
@@ -433,9 +445,11 @@ input[type="email"]:focus,
     flex-direction: row;
     width: 100%;
     min-height: 100vh;
+    position: relative;
+    z-index: 2;
 }
 
-.bands-control-container{
+.bands-control-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -565,4 +579,3 @@ input[type="date"].styled-date:focus {
     background-color: var(--accent-hover);
 
 }
-
